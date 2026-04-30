@@ -134,7 +134,7 @@ export function PixPagamento({ numero, qrCode, qrImage, receiptUrl, initialStatu
         Verificamos automaticamente a cada poucos segundos.
       </p>
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
+      <div className="mt-5 pt-4 border-t border-gray-100">
         <a
           href={linkWhatsApp(
             whatsappSuporte,
@@ -142,16 +142,18 @@ export function PixPagamento({ numero, qrCode, qrImage, receiptUrl, initialStatu
           )}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full min-h-12 rounded-xl bg-[#25D366] hover:bg-[#1ebe5a] text-white font-bold text-[13px] flex items-center justify-center gap-2 px-4 py-2.5 active:scale-[0.98] transition shadow-sm"
+          className="w-full rounded-2xl bg-[#25D366] active:bg-[#1ebe5a] text-white flex items-center gap-3 px-4 py-3.5 active:scale-[0.98] transition shadow-md"
         >
-          <MessageCircle className="w-[18px] h-[18px] flex-shrink-0" />
-          <span className="leading-tight text-center">
-            Problemas com o PIX? Falar com o suporte
+          <span className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <MessageCircle className="w-5 h-5 text-white" />
+          </span>
+          <span className="flex-1 text-left leading-tight">
+            <span className="block font-extrabold text-[15px]">Falar com o suporte</span>
+            <span className="block text-[11px] opacity-90 font-medium">
+              Atendimento 24h pelo WhatsApp
+            </span>
           </span>
         </a>
-        <p className="text-[11px] text-gray-400 text-center mt-2">
-          Atendimento 24h via WhatsApp
-        </p>
       </div>
     </div>
   );
