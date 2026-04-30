@@ -27,13 +27,51 @@ function urlImagemCategoria(c: { slug: string; imagem_url: string | null }): str
   return null;
 }
 
+// Cache lazy: converte chaves de mapaImagens em "raiz" (sem id/volume no fim)
+// pra acelerar busca por similaridade. Roda 1x na inicializacao.
+let _indiceRaiz: Map<string, string> | null = null;
+function indiceRaizImagens(): Map<string, string> {
+  if (_indiceRaiz) return _indiceRaiz;
+  const map = new Map<string, string>();
+  for (const [k, v] of Object.entries(mapaImagens)) {
+    const raiz = raizSlug(k);
+    if (!map.has(raiz)) map.set(raiz, v);
+  }
+  _indiceRaiz = map;
+  return map;
+}
+
+/**
+ * Reduz um slug a sua "raiz" pra permitir match entre variantes do mesmo produto.
+ * Remove sufixos comuns: id numerico no final (-628), volume (-275ml, -750ml, -1l),
+ * pack (-pack-com-12), e palavras de variacao logistica (entrega, gelado, express, rapido).
+ * Ex: "smirnoff-ice-original-275ml-1147" -> "smirnoff-ice-original"
+ *     "smirnoff-ice-original-628"        -> "smirnoff-ice-original"
+ */
+function raizSlug(slug: string): string {
+  return slug
+    .replace(/-\d+$/g, "")
+    .replace(/-(?:\d+(?:[._-]\d+)?)(?:ml|l|kg|g|un|unidades|litros)\b/g, "")
+    .replace(/-pack-com-\d+/g, "")
+    .replace(/-(?:entrega|gelado|express|rapido|delivery|entrega-rapida)(?:-rapida)?\b/g, "")
+    .replace(/-+$/, "");
+}
+
 function urlImagemProduto(slug: string, imagemUrl: string | null): string | null {
   if (imagemUrl && /^https?:\/\//i.test(imagemUrl)) return imagemUrl;
-  if (imagemUrl && imagemUrl.startsWith("/")) {
-    const local = mapaImagens[slug];
-    return local || imagemUrl;
-  }
+
+  // Match exato no mapa local
   if (mapaImagens[slug]) return mapaImagens[slug];
+
+  // Match por similaridade: encontra outra variante do mesmo produto
+  const raiz = raizSlug(slug);
+  if (raiz) {
+    const similar = indiceRaizImagens().get(raiz);
+    if (similar) return similar;
+  }
+
+  // Mantem a URL original (mesmo se for /products/xxx que pode dar 404 — pelo menos
+  // nao quebra produtos que dependiam disso). Codigo do CardProduto/Image trata fallback.
   return imagemUrl || null;
 }
 
