@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Produto } from "@/lib/types";
 import { calcDesconto, fmtPreco, precoFinal } from "@/lib/utils";
 import { imagemProduto } from "@/lib/imagens";
+import { SafeProductImage } from "@/components/SafeProductImage";
 
 export function ProductCard({ produto, prioridade = false }: { produto: Produto; prioridade?: boolean }) {
   const { adicionar } = useCart();
@@ -19,7 +19,7 @@ export function ProductCard({ produto, prioridade = false }: { produto: Produto;
       <Link href={`/produto/${produto.slug}`} className="block h-full">
         <div className="bg-white rounded-xl overflow-hidden border border-gray-100 h-full flex flex-col">
           <div className="relative aspect-square bg-gray-50">
-            <Image
+            <SafeProductImage
               src={img}
               alt={produto.name}
               fill

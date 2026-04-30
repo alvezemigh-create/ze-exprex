@@ -31,16 +31,16 @@ function urlImagemCategoria(c: { slug: string; imagem_url: string | null }): str
 // _indiceRaiz: raiz exata -> primeira url
 // _tokensPorUrl: lista [{ tokens, url }] pra fuzzy match por overlap
 let _indiceRaiz: Map<string, string> | null = null;
-let _tokensPorUrl: Array<{ tokens: Set<string>; url: string }> | null = null;
+let _tokensPorUrl: Array<{ tokens: string[]; url: string }> | null = null;
 
 function construirIndices() {
   const raizMap = new Map<string, string>();
-  const tokensList: Array<{ tokens: Set<string>; url: string }> = [];
+  const tokensList: Array<{ tokens: string[]; url: string }> = [];
   for (const [k, v] of Object.entries(mapaImagens)) {
     const raiz = raizSlug(k);
     if (raiz && !raizMap.has(raiz)) raizMap.set(raiz, v);
     const toks = tokensDeSlug(k);
-    if (toks.size >= 2) tokensList.push({ tokens: toks, url: v });
+    if (toks.length >= 2) tokensList.push({ tokens: toks, url: v });
   }
   _indiceRaiz = raizMap;
   _tokensPorUrl = tokensList;
@@ -50,7 +50,7 @@ function indiceRaizImagens(): Map<string, string> {
   if (!_indiceRaiz) construirIndices();
   return _indiceRaiz!;
 }
-function tokensIndex(): Array<{ tokens: Set<string>; url: string }> {
+function tokensIndex(): Array<{ tokens: string[]; url: string }> {
   if (!_tokensPorUrl) construirIndices();
   return _tokensPorUrl!;
 }
@@ -65,19 +65,20 @@ const STOP = new Set([
   "serve", "pessoas",
 ]);
 
-function tokensDeSlug(slug: string): Set<string> {
-  return new Set(
-    slug
-      .split(/-+/)
-      .filter((w) => {
-        if (!w || w.length < 2) return false;
-        if (STOP.has(w)) return false;
-        if (/^\d+$/.test(w)) return false;
-        // Remove tokens que sao volume/quantidade (ex: 750ml, 1l, 2-5kg, 12anos, 4kg)
-        if (/^\d+(?:[._-]\d+)?(?:ml|l|kg|g|un|unidades|anos|cm)$/i.test(w)) return false;
-        return true;
-      }),
-  );
+function tokensDeSlug(slug: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const w of slug.split(/-+/)) {
+    if (!w || w.length < 2) continue;
+    if (STOP.has(w)) continue;
+    if (/^\d+$/.test(w)) continue;
+    // Remove tokens que sao volume/quantidade (ex: 750ml, 1l, 2-5kg, 12anos, 4kg)
+    if (/^\d+(?:[._-]\d+)?(?:ml|l|kg|g|un|unidades|anos|cm)$/i.test(w)) continue;
+    if (seen.has(w)) continue;
+    seen.add(w);
+    out.push(w);
+  }
+  return out;
 }
 
 /**
@@ -104,19 +105,39 @@ function raizSlug(slug: string): string {
  * for maior. Combina Jaccard (para slugs de tamanho parecido) com Containment
  * (parte do menor que cabe no maior). Threshold combinado em 0.5.
  */
+
+/** Nome do arquivo (sem extensao) a partir de `/products/foo.jpg` */
+function stemArquivoProducts(imagemUrl: string): string | null {
+  if (!imagemUrl.startsWith("/products/")) return null;
+  const fn = imagemUrl.slice("/products/".length).split("/").pop() ?? "";
+  if (!fn) return null;
+  const dot = fn.lastIndexOf(".");
+  return dot > 0 ? fn.slice(0, dot) : fn;
+}
+
+/** Só aceita caminho local se existir arquivo real no mapa gerado em public/products */
+function urlLocalProductsValida(imagemUrl: string | null): string | null {
+  if (!imagemUrl?.startsWith("/products/")) return null;
+  const stem = stemArquivoProducts(imagemUrl);
+  if (!stem) return null;
+  const canonical = mapaImagens[stem];
+  return canonical ?? null;
+}
+
 function urlPorTokens(slug: string): string | null {
   const alvo = tokensDeSlug(slug);
-  if (alvo.size < 2) return null;
+  if (alvo.length < 2) return null;
+  const alvoSet = new Set(alvo);
   // Ranqueamento: (1) mais tokens em comum, (2) maior Jaccard.
   // Aceita se Jaccard >=0.4 OU containment (inter/min(a,b)) >= 0.66.
   let melhor: { inter: number; jaccard: number; url: string } | null = null;
   for (const cand of tokensIndex()) {
     let inter = 0;
-    for (const t of alvo) if (cand.tokens.has(t)) inter++;
+    for (const t of cand.tokens) if (alvoSet.has(t)) inter++;
     if (inter < 2) continue;
-    const uni = alvo.size + cand.tokens.size - inter;
+    const uni = alvo.length + cand.tokens.length - inter;
     const jaccard = inter / uni;
-    const contain = inter / Math.min(alvo.size, cand.tokens.size);
+    const contain = inter / Math.min(alvo.length, cand.tokens.length);
     if (!(jaccard >= 0.4 || contain >= 0.66)) continue;
     const melhorAtual =
       !melhor ||
@@ -129,10 +150,14 @@ function urlPorTokens(slug: string): string | null {
   return melhor?.url ?? null;
 }
 
-function urlImagemProduto(slug: string, imagemUrl: string | null): string | null {
+export function urlImagemProduto(slug: string, imagemUrl: string | null): string | null {
   if (imagemUrl && /^https?:\/\//i.test(imagemUrl)) return imagemUrl;
 
-  // 1) Match exato no mapa local
+  // Caminho salvo no banco (/products/...) só vale se o arquivo existir em disco
+  const localDoBanco = urlLocalProductsValida(imagemUrl);
+  if (localDoBanco) return localDoBanco;
+
+  // 1) Match exato no mapa local (slug = nome do arquivo)
   if (mapaImagens[slug]) return mapaImagens[slug];
 
   // 2) Match por raiz (variantes de mesmo produto: id/volume/pack diferentes)
@@ -147,9 +172,8 @@ function urlImagemProduto(slug: string, imagemUrl: string | null): string | null
   const fuzzy = urlPorTokens(slug);
   if (fuzzy) return fuzzy;
 
-  // 4) Mantem a URL original (mesmo que seja /products/xxx broken — codigo do
-  //    Image/onError trata o fallback final pro placeholder)
-  return imagemUrl || null;
+  // Não devolver caminho quebrado — imagemProduto cai no placeholder
+  return null;
 }
 
 function mapearCategoria(row: Record<string, unknown>): Categoria {

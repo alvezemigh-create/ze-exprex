@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -6,6 +5,7 @@ import { ArrowLeft, ShieldCheck, Star, Truck } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
+import { SafeProductImage } from "@/components/SafeProductImage";
 import { ProductActions } from "./product-actions";
 import { buscarProduto, listarProdutos, relacionadosDe } from "@/lib/data";
 import { imagemProduto } from "@/lib/imagens";
@@ -52,7 +52,7 @@ export default async function ProdutoPage({ params }: { params: { slug: string }
         </div>
 
         <div className="relative aspect-square bg-gray-50 mx-4 rounded-xl overflow-hidden">
-          <Image
+          <SafeProductImage
             src={img}
             alt={produto.name}
             fill

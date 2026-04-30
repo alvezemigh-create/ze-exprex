@@ -1,8 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
-import { ChevronRight, ImageIcon, Plus, Search } from "lucide-react";
+import { ChevronRight, Plus, Search } from "lucide-react";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { urlImagemProduto } from "@/lib/data";
+import { imagemProduto } from "@/lib/imagens";
 import { fmtPreco } from "@/lib/utils";
+import { SafeProductImage } from "@/components/SafeProductImage";
 import { ProdutosReorderClient } from "./reorder-client";
 
 export const dynamic = "force-dynamic";
@@ -136,6 +138,10 @@ export default async function ProdutosPage({
       <ul className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100 overflow-hidden">
         {(prods ?? []).map((p) => {
           const precoExibido = p.preco_promocional ?? p.preco;
+          const thumb = imagemProduto({
+            slug: p.slug,
+            imageUrl: urlImagemProduto(p.slug, (p.imagem_url as string | null) ?? null) ?? null,
+          });
           return (
             <li key={p.id}>
               <Link
@@ -143,11 +149,7 @@ export default async function ProdutosPage({
                 className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50/50"
               >
                 <div className="w-12 h-12 rounded-lg bg-gray-100 relative flex-shrink-0 overflow-hidden flex items-center justify-center">
-                  {p.imagem_url ? (
-                    <Image src={p.imagem_url} alt={p.nome} fill sizes="48px" className="object-contain p-1" />
-                  ) : (
-                    <ImageIcon className="w-4 h-4 text-gray-300" />
-                  )}
+                  <SafeProductImage src={thumb} alt={p.nome} fill sizes="48px" className="object-contain p-1" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
