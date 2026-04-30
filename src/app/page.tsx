@@ -5,15 +5,14 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { CategoryCircle } from "@/components/CategoryCircle";
 import { HeroBanner } from "@/components/HeroBanner";
-import { listarCategoriasPublicadas, listarProdutos, ofertas } from "@/lib/data";
+import { listarCategoriasPublicadas, listarProdutos } from "@/lib/data";
 
 export const revalidate = 300;
 
 export default async function Home() {
-  const [categorias, todosProdutos, promo] = await Promise.all([
+  const [categorias, todosProdutos] = await Promise.all([
     listarCategoriasPublicadas(),
     listarProdutos(),
-    ofertas(10),
   ]);
 
   const produtosPorCategoria = categorias
@@ -45,27 +44,6 @@ export default async function Home() {
             ))}
           </div>
         </section>
-
-        {promo.length > 0 && (
-          <section className="py-4 bg-brand-gray">
-            <div className="px-4 flex items-center justify-between mb-3">
-              <h2 className="font-extrabold text-base text-brand-dark font-display">🔥 Ofertas</h2>
-              <Link
-                href="/produtos?category=ofertas"
-                className="inline-flex items-center text-xs text-gray-500 active:text-brand-dark"
-              >
-                Ver tudo <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 px-4">
-              {promo.map((p) => (
-                <div key={p.id} className="flex-shrink-0 w-[155px]">
-                  <ProductCard produto={p} />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {produtosPorCategoria.map(({ cat, produtos }, idx) => (
           <section key={cat.id} className={idx % 2 === 0 ? "py-4 bg-white" : "py-4 bg-brand-gray"}>
