@@ -34,32 +34,32 @@ export default async function PedidoPage({ params }: { params: Promise<Params> }
 
   const { data: pedido } = await sb
     .from("pedidos")
-    .select("*")
+    .select(
+      "id,numero,status,forma_pagamento,total,cliente_nome,cliente_telefone,endereco,criado_em,pix_qr_code,pix_qr_image,receipt_url",
+    )
     .eq("numero", numero)
     .maybeSingle();
 
   if (!pedido) notFound();
 
-  const { data: itens } = await sb
-    .from("itens_pedido")
-    .select("*")
-    .eq("pedido_id", pedido.id)
-    .order("criado_em", { ascending: true });
+  const [{ data: itens }, whatsappSuporte] = await Promise.all([
+    sb
+      .from("itens_pedido")
+      .select("id,produto_nome,imagem,quantidade,preco_unitario")
+      .eq("pedido_id", pedido.id)
+      .order("criado_em", { ascending: true }),
+    obterWhatsappSuporte(),
+  ]);
 
   const endereco = pedido.endereco as Record<string, string>;
   const previsao = new Date(new Date(pedido.criado_em as string).getTime() + 40 * 60 * 1000)
     .toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-  // Garante que sempre teremos uma imagem pro QR — pra pedidos antigos
-  // que foram criados sem QR Code visual (so com o codigo copia-e-cola),
-  // geramos a imagem agora.
   const qrCodeTexto = (pedido.pix_qr_code as string | null) ?? null;
   let qrImagemFinal = (pedido.pix_qr_image as string | null) ?? null;
   if (!qrImagemFinal && qrCodeTexto) {
     qrImagemFinal = await gerarQrCodeDataUrl(qrCodeTexto);
   }
-
-  const whatsappSuporte = await obterWhatsappSuporte();
 
   return (
     <div className="min-h-screen bg-brand-gray">

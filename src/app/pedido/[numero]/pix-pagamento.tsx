@@ -142,13 +142,15 @@ export function PixPagamento({ numero, qrCode, qrImage, receiptUrl, initialStatu
           )}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full h-12 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition"
+          className="w-full min-h-12 rounded-xl bg-[#25D366] hover:bg-[#1ebe5a] text-white font-bold text-[13px] flex items-center justify-center gap-2 px-4 py-2.5 active:scale-[0.98] transition shadow-sm"
         >
-          <MessageCircle className="w-4 h-4" />
-          Problemas com pagamento? Falar com suporte 24h
+          <MessageCircle className="w-[18px] h-[18px] flex-shrink-0" />
+          <span className="leading-tight text-center">
+            Problemas com o PIX? Falar com o suporte
+          </span>
         </a>
         <p className="text-[11px] text-gray-400 text-center mt-2">
-          Atendimento via WhatsApp
+          Atendimento 24h via WhatsApp
         </p>
       </div>
     </div>
