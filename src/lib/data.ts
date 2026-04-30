@@ -27,51 +27,128 @@ function urlImagemCategoria(c: { slug: string; imagem_url: string | null }): str
   return null;
 }
 
-// Cache lazy: converte chaves de mapaImagens em "raiz" (sem id/volume no fim)
-// pra acelerar busca por similaridade. Roda 1x na inicializacao.
+// Cache lazy de indices pra acelerar busca por similaridade.
+// _indiceRaiz: raiz exata -> primeira url
+// _tokensPorUrl: lista [{ tokens, url }] pra fuzzy match por overlap
 let _indiceRaiz: Map<string, string> | null = null;
-function indiceRaizImagens(): Map<string, string> {
-  if (_indiceRaiz) return _indiceRaiz;
-  const map = new Map<string, string>();
+let _tokensPorUrl: Array<{ tokens: Set<string>; url: string }> | null = null;
+
+function construirIndices() {
+  const raizMap = new Map<string, string>();
+  const tokensList: Array<{ tokens: Set<string>; url: string }> = [];
   for (const [k, v] of Object.entries(mapaImagens)) {
     const raiz = raizSlug(k);
-    if (!map.has(raiz)) map.set(raiz, v);
+    if (raiz && !raizMap.has(raiz)) raizMap.set(raiz, v);
+    const toks = tokensDeSlug(k);
+    if (toks.size >= 2) tokensList.push({ tokens: toks, url: v });
   }
-  _indiceRaiz = map;
-  return map;
+  _indiceRaiz = raizMap;
+  _tokensPorUrl = tokensList;
+}
+
+function indiceRaizImagens(): Map<string, string> {
+  if (!_indiceRaiz) construirIndices();
+  return _indiceRaiz!;
+}
+function tokensIndex(): Array<{ tokens: Set<string>; url: string }> {
+  if (!_tokensPorUrl) construirIndices();
+  return _tokensPorUrl!;
+}
+
+// Palavras que nao identificam o produto (ruido pra match por tokens).
+const STOP = new Set([
+  "kit", "combo", "lata", "long", "neck", "barril", "ml", "l", "kg", "g",
+  "un", "unidades", "litros", "litro", "pack", "com", "de", "do", "da",
+  "e", "para", "no", "a", "o", "ate",
+  "express", "gelado", "entrega", "rapida", "rapido", "delivery", "so",
+  "novo", "premium", "tradicional", "original", "fresh", "bebida", "composta",
+  "serve", "pessoas",
+]);
+
+function tokensDeSlug(slug: string): Set<string> {
+  return new Set(
+    slug
+      .split(/-+/)
+      .filter((w) => {
+        if (!w || w.length < 2) return false;
+        if (STOP.has(w)) return false;
+        if (/^\d+$/.test(w)) return false;
+        // Remove tokens que sao volume/quantidade (ex: 750ml, 1l, 2-5kg, 12anos, 4kg)
+        if (/^\d+(?:[._-]\d+)?(?:ml|l|kg|g|un|unidades|anos|cm)$/i.test(w)) return false;
+        return true;
+      }),
+  );
 }
 
 /**
  * Reduz um slug a sua "raiz" pra permitir match entre variantes do mesmo produto.
  * Remove sufixos comuns: id numerico no final (-628), volume (-275ml, -750ml, -1l),
- * pack (-pack-com-12), e palavras de variacao logistica (entrega, gelado, express, rapido).
- * Ex: "smirnoff-ice-original-275ml-1147" -> "smirnoff-ice-original"
- *     "smirnoff-ice-original-628"        -> "smirnoff-ice-original"
+ * pack (-pack-com-12), variacoes logisticas (entrega/gelado/express/rapido)
+ * e prefixos comuns (kit-/combo-).
  */
 function raizSlug(slug: string): string {
   return slug
+    .replace(/^(?:kit|combo)-/g, "")
     .replace(/-\d+$/g, "")
+    .replace(/-\d+-unidades?\b/g, "")
     .replace(/-(?:\d+(?:[._-]\d+)?)(?:ml|l|kg|g|un|unidades|litros)\b/g, "")
     .replace(/-pack-com-\d+/g, "")
-    .replace(/-(?:entrega|gelado|express|rapido|delivery|entrega-rapida)(?:-rapida)?\b/g, "")
-    .replace(/-+$/, "");
+    .replace(/-caixa-com-\d+/g, "")
+    .replace(/-(?:entrega|gelado|express|rapido|rapida|delivery|so-barril)\b/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Fuzzy match: retorna a URL cuja "intersecao de palavras" com o slug alvo
+ * for maior. Combina Jaccard (para slugs de tamanho parecido) com Containment
+ * (parte do menor que cabe no maior). Threshold combinado em 0.5.
+ */
+function urlPorTokens(slug: string): string | null {
+  const alvo = tokensDeSlug(slug);
+  if (alvo.size < 2) return null;
+  // Ranqueamento: (1) mais tokens em comum, (2) maior Jaccard.
+  // Aceita se Jaccard >=0.4 OU containment (inter/min(a,b)) >= 0.66.
+  let melhor: { inter: number; jaccard: number; url: string } | null = null;
+  for (const cand of tokensIndex()) {
+    let inter = 0;
+    for (const t of alvo) if (cand.tokens.has(t)) inter++;
+    if (inter < 2) continue;
+    const uni = alvo.size + cand.tokens.size - inter;
+    const jaccard = inter / uni;
+    const contain = inter / Math.min(alvo.size, cand.tokens.size);
+    if (!(jaccard >= 0.4 || contain >= 0.66)) continue;
+    const melhorAtual =
+      !melhor ||
+      inter > melhor.inter ||
+      (inter === melhor.inter && jaccard > melhor.jaccard);
+    if (melhorAtual) {
+      melhor = { inter, jaccard, url: cand.url };
+    }
+  }
+  return melhor?.url ?? null;
 }
 
 function urlImagemProduto(slug: string, imagemUrl: string | null): string | null {
   if (imagemUrl && /^https?:\/\//i.test(imagemUrl)) return imagemUrl;
 
-  // Match exato no mapa local
+  // 1) Match exato no mapa local
   if (mapaImagens[slug]) return mapaImagens[slug];
 
-  // Match por similaridade: encontra outra variante do mesmo produto
+  // 2) Match por raiz (variantes de mesmo produto: id/volume/pack diferentes)
   const raiz = raizSlug(slug);
   if (raiz) {
     const similar = indiceRaizImagens().get(raiz);
     if (similar) return similar;
   }
 
-  // Mantem a URL original (mesmo se for /products/xxx que pode dar 404 — pelo menos
-  // nao quebra produtos que dependiam disso). Codigo do CardProduto/Image trata fallback.
+  // 3) Fuzzy match por overlap de tokens (cobre slugs com prefixos diferentes,
+  //    ex: "vodka-mansao-maromba-..." vs "bebida-composta-mansao-maromba-vodka-...")
+  const fuzzy = urlPorTokens(slug);
+  if (fuzzy) return fuzzy;
+
+  // 4) Mantem a URL original (mesmo que seja /products/xxx broken — codigo do
+  //    Image/onError trata o fallback final pro placeholder)
   return imagemUrl || null;
 }
 
