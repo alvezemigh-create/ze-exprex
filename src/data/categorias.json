@@ -1,0 +1,156 @@
+[
+    {
+        "id":  "cmod8yq3h0006s6zluefijktt",
+        "name":  "Águas e Gelo",
+        "slug":  "aguas-e-gelo",
+        "description":  "",
+        "imageUrl":  "/categories/aguas_gelo.webp",
+        "icon":  "droplets",
+        "sortOrder":  7,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq360001s6zlxulid8cq",
+        "name":  "Cervejas",
+        "slug":  "cervejas",
+        "description":  "",
+        "imageUrl":  "/categories/cervejas.webp",
+        "icon":  "beer",
+        "sortOrder":  2,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3f0005s6zlufn51dsb",
+        "name":  "Chopp",
+        "slug":  "chopp",
+        "description":  "",
+        "imageUrl":  "/categories/chopp.webp",
+        "icon":  "beer",
+        "sortOrder":  6,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3d0004s6zlo1g54wp5",
+        "name":  "Churrasco",
+        "slug":  "churrasco",
+        "description":  "",
+        "imageUrl":  "/categories/churrasco.webp",
+        "icon":  "flame",
+        "sortOrder":  5,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3s000bs6zlhlgkr70w",
+        "name":  "Cigarros",
+        "slug":  "cigarros",
+        "description":  "",
+        "imageUrl":  "/categories/cigarros.png",
+        "icon":  "cigarette",
+        "sortOrder":  12,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3r000as6zlo485tthh",
+        "name":  "Conveniência",
+        "slug":  "conveniencia",
+        "description":  "",
+        "imageUrl":  "/categories/conveniencia.webp",
+        "icon":  "shopping-bag",
+        "sortOrder":  11,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq390002s6zlzf89l7r2",
+        "name":  "Destilados",
+        "slug":  "destilados",
+        "description":  "",
+        "imageUrl":  "/categories/destilados.webp",
+        "icon":  "droplets",
+        "sortOrder":  3,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3m0008s6zljxgcew2o",
+        "name":  "Drinks Prontos",
+        "slug":  "drinks-prontos",
+        "description":  "",
+        "imageUrl":  "/categories/drinks.webp",
+        "icon":  "martini",
+        "sortOrder":  9,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3w000ds6zl1jalkwq1",
+        "name":  "Energéticos",
+        "slug":  "energeticos",
+        "description":  "",
+        "imageUrl":  "/categories/energeticos.png",
+        "icon":  "zap",
+        "sortOrder":  14,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3k0007s6zlzj5a6z6n",
+        "name":  "Não alcoólicos",
+        "slug":  "nao-alcoolicos",
+        "description":  "",
+        "imageUrl":  "/categories/nao_alcoolicos.webp",
+        "icon":  "cup-soda",
+        "sortOrder":  8,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq330000s6zlsz2c0fdf",
+        "name":  "Ofertas",
+        "slug":  "ofertas",
+        "description":  "",
+        "imageUrl":  "/categories/ofertas.webp",
+        "icon":  "tag",
+        "sortOrder":  1,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3u000cs6zlr7fz79ns",
+        "name":  "Refrigerantes",
+        "slug":  "refrigerantes",
+        "description":  "",
+        "imageUrl":  "/categories/refrigerantes.png",
+        "icon":  "droplets",
+        "sortOrder":  13,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3p0009s6zlokc4bamh",
+        "name":  "Sobremesas",
+        "slug":  "sobremesas",
+        "description":  "",
+        "imageUrl":  "/categories/sobremesas.webp",
+        "icon":  "cake",
+        "sortOrder":  10,
+        "createdAt":  null,
+        "updatedAt":  null
+    },
+    {
+        "id":  "cmod8yq3b0003s6zl1muz1irb",
+        "name":  "Vinhos",
+        "slug":  "vinhos",
+        "description":  "",
+        "imageUrl":  "/categories/vinhos.webp",
+        "icon":  "wine",
+        "sortOrder":  4,
+        "createdAt":  null,
+        "updatedAt":  null
+    }
+]

@@ -1,0 +1,6 @@
+User-Agent: *
+Allow: /verificacao-idade
+Disallow: /
+
+Host: https://ze-chegou-24h.com
+Sitemap: https://ze-chegou-24h.com/sitemap.xml
