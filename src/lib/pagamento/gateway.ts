@@ -215,9 +215,10 @@ export async function criarCobrancaPix(
       metadata: input.metadata,
       callbackUrl: input.callbackUrl,
     });
-    // Garante que sempre teremos uma imagem visualizavel — gera fallback se nao veio
+    // SEMPRE garante um base64 inline (mais confiavel que a URL externa do OneTimePay,
+    // que as vezes tem CORS/expira/bloqueia carregamento direto no <img>)
     let base64 = r.pix.base64 ?? null;
-    if (!r.pix.image && !base64 && r.pix.code) {
+    if (!base64 && r.pix.code) {
       base64 = await gerarQrCodeDataUrl(r.pix.code);
     }
     return {

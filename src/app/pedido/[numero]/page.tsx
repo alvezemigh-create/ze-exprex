@@ -56,7 +56,13 @@ export default async function PedidoPage({ params }: { params: Promise<Params> }
     .toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   const qrCodeTexto = (pedido.pix_qr_code as string | null) ?? null;
-  let qrImagemFinal = (pedido.pix_qr_image as string | null) ?? null;
+  const imagemSalva = (pedido.pix_qr_image as string | null) ?? null;
+  // Confiamos apenas em data URLs (base64 inline). URLs externas (http/https)
+  // de gateways como OneTimePay frequentemente quebram (CORS, expiracao,
+  // bloqueio do navegador), entao geramos um QR local em cima do codigo.
+  const imagemConfiavel =
+    imagemSalva && imagemSalva.startsWith("data:") ? imagemSalva : null;
+  let qrImagemFinal = imagemConfiavel;
   if (!qrImagemFinal && qrCodeTexto) {
     qrImagemFinal = await gerarQrCodeDataUrl(qrCodeTexto);
   }

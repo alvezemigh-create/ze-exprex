@@ -213,7 +213,10 @@ export async function criarPedido(input: PedidoInput): Promise<CriarPedidoResult
           gateway_status: pix.gatewayStatus,
           gateway_pagamento: pix.gateway,
           pix_qr_code: pix.pix.code,
-          pix_qr_image: pix.pix.image ?? pix.pix.base64 ?? null,
+          // base64 PRIMEIRO — imagem inline e sempre carregavel.
+          // URL externa (image) so como fallback porque alguns gateways (OneTimePay)
+          // devolvem URLs que dao CORS / expiram / nao carregam no navegador.
+          pix_qr_image: pix.pix.base64 ?? pix.pix.image ?? null,
           order_url: pix.orderUrl,
           receipt_url: pix.receiptUrl,
         })
