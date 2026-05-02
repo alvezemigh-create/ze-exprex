@@ -3,6 +3,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { criarCobrancaPix, obterGatewayAtivo } from "@/lib/pagamento/gateway";
 import { detectarBandeira, mascararCartao, validarCartao } from "@/lib/cartao";
+import { mensagemErroPedidoMinimo, PEDIDO_MINIMO_REAIS } from "@/lib/pedido-minimo";
 
 export type EnderecoInput = {
   cep: string;
@@ -111,6 +112,9 @@ export async function criarPedido(input: PedidoInput): Promise<CriarPedidoResult
   }
 
   const subtotal = input.itens.reduce((s, i) => s + i.quantidade * i.precoUnitario, 0);
+  if (subtotal < PEDIDO_MINIMO_REAIS) {
+    return { ok: false, erro: mensagemErroPedidoMinimo() };
+  }
 
   const sb = createSupabaseAdmin();
   const numero = gerarNumero();

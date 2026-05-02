@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Drawer } from "vaul";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import { mensagemErroPedidoMinimo, PEDIDO_MINIMO_REAIS, subtotalAbaixoDoMinimo } from "@/lib/pedido-minimo";
 import { fmtPreco } from "@/lib/utils";
 
 export function CartSheet() {
@@ -12,6 +14,10 @@ export function CartSheet() {
   const { itens, totalValor, alterarQtd, remover, drawerAberto, fecharDrawer } = useCart();
 
   const irParaCheckout = () => {
+    if (subtotalAbaixoDoMinimo(totalValor)) {
+      toast.error(mensagemErroPedidoMinimo());
+      return;
+    }
     fecharDrawer();
     router.push("/checkout");
   };
@@ -98,10 +104,16 @@ export function CartSheet() {
                   <span className="text-sm text-gray-600">Total</span>
                   <span className="font-extrabold text-lg text-brand-dark">{fmtPreco(totalValor)}</span>
                 </div>
+                {subtotalAbaixoDoMinimo(totalValor) && (
+                  <p className="text-[11px] leading-snug text-amber-800 bg-amber-50 rounded-xl px-3 py-2 border border-amber-100">
+                    Mínimo {fmtPreco(PEDIDO_MINIMO_REAIS)}. Faltam{" "}
+                    <span className="font-bold">{fmtPreco(Math.max(0, PEDIDO_MINIMO_REAIS - totalValor))}</span>.
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={irParaCheckout}
-                  className="w-full h-12 rounded-full font-extrabold text-sm bg-brand-yellow text-brand-dark active:scale-[0.98] transition-transform"
+                  className="w-full h-12 rounded-full font-extrabold text-sm bg-brand-yellow text-brand-dark transition-transform active:scale-[0.98]"
                 >
                   Finalizar Pedido
                 </button>

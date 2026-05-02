@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { CartProvider } from "@/contexts/CartContext";
@@ -40,6 +41,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartSheet />
           <Toaster position="top-center" richColors closeButton />
         </CartProvider>
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`(function(c,l,a,r,i,t,y){
+c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "wjwwvnf403");`}
+        </Script>
       </body>
     </html>
   );

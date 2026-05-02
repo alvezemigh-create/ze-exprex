@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { useCart } from "@/contexts/CartContext";
+import { mensagemErroPedidoMinimo, subtotalAbaixoDoMinimo } from "@/lib/pedido-minimo";
 import { fmtPreco, validarCep, validarCpf, validarTelefoneBR } from "@/lib/utils";
 import { criarPedido } from "./actions";
 import { EtapaEntregador } from "./etapa-entregador";
@@ -127,10 +128,16 @@ export function CheckoutClient({ metodosAtivos }: { metodosAtivos: MetodosAtivos
   }, [dados, montado]);
 
   useEffect(() => {
-    if (montado && pronto && itens.length === 0 && !enviando && !pedidoCriado) {
+    if (!montado || !pronto || enviando || pedidoCriado) return;
+    if (itens.length === 0) {
+      router.replace("/carrinho");
+      return;
+    }
+    if (subtotalAbaixoDoMinimo(totalValor)) {
+      toast.error(mensagemErroPedidoMinimo());
       router.replace("/carrinho");
     }
-  }, [montado, pronto, itens.length, enviando, pedidoCriado, router]);
+  }, [montado, pronto, itens.length, totalValor, enviando, pedidoCriado, router]);
 
   const setCampo = <K extends keyof DadosForm>(k: K, v: DadosForm[K]) => {
     setDados((d) => ({ ...d, [k]: v }));
@@ -229,6 +236,11 @@ export function CheckoutClient({ metodosAtivos }: { metodosAtivos: MetodosAtivos
   };
 
   const finalizar = async () => {
+    if (subtotalAbaixoDoMinimo(totalValor)) {
+      toast.error(mensagemErroPedidoMinimo());
+      router.push("/carrinho");
+      return;
+    }
     if (!validarAddress()) {
       toast.error("Preencha os campos do endereço");
       setEtapa("address");
