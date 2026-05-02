@@ -1,5 +1,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
+import catalogoJson from "@/data/catalogo.json";
 import imagensRaw from "@/data/imagens-produtos.json";
 import imagensCategoriasRaw from "@/data/imagens-categorias.json";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
@@ -7,6 +8,24 @@ import type { Categoria, Produto } from "./types";
 
 const mapaImagens = imagensRaw as Record<string, string>;
 const mapaImagensCategorias = imagensCategoriasRaw as Record<string, string>;
+
+/** Catálogo versionado (slug → URL https). Em produção o prebuild zera o mapa de public/products; isso evita 404 em /products/*. */
+type LinhaCatalogo = { slug?: string | null; imageUrl?: string | null };
+let _imagemPorSlugCatalogo: ReadonlyMap<string, string> | null = null;
+
+function imagemCatalogoPorSlug(slug: string): string | null {
+  if (!_imagemPorSlugCatalogo) {
+    const m = new Map<string, string>();
+    for (const row of catalogoJson as LinhaCatalogo[]) {
+      const s = row.slug?.trim();
+      const u = row.imageUrl?.trim();
+      if (!s || !u || !/^https?:\/\//i.test(u)) continue;
+      if (!m.has(s)) m.set(s, u);
+    }
+    _imagemPorSlugCatalogo = m;
+  }
+  return _imagemPorSlugCatalogo.get(slug) ?? null;
+}
 
 // =============================================================
 // HELPERS
@@ -152,6 +171,9 @@ function urlPorTokens(slug: string): string | null {
 
 export function urlImagemProduto(slug: string, imagemUrl: string | null): string | null {
   if (imagemUrl && /^https?:\/\//i.test(imagemUrl)) return imagemUrl;
+
+  const catalogo = imagemCatalogoPorSlug(slug);
+  if (catalogo) return catalogo;
 
   // Caminho salvo no banco (/products/...) só vale se o arquivo existir em disco
   const localDoBanco = urlLocalProductsValida(imagemUrl);
